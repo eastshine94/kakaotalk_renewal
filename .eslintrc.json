@@ -16,16 +16,18 @@
   },
   "extends": [
     "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
     "plugin:react/recommended",
     "airbnb",
+    "airbnb-typescript",
+    "airbnb/hooks",
+    "plugin:@next/next/core-web-vitals",
     "plugin:prettier/recommended"
   ],
   "settings": {
     "react": {
       "version": "detect"
-    },
-    "import/resolver": {
-      "typescript": {}
     }
   },
 
@@ -44,7 +46,8 @@
     ],
     "react/jsx-uses-react": "off",
     "react/require-default-props": "off",
-    "react/jsx-props-no-spreading": "off"
+    "react/jsx-props-no-spreading": "off",
+    "react/jsx-no-useless-fragment": "off"
   },
   "ignorePatterns": [".*", "*.config.ts", "node_modules", "build"]
 }
