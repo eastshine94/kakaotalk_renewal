@@ -23,6 +23,9 @@
   "settings": {
     "react": {
       "version": "detect"
+    },
+    "import/resolver": {
+      "typescript": {}
     }
   },
 
@@ -43,12 +46,5 @@
     "react/require-default-props": "off",
     "react/jsx-props-no-spreading": "off"
   },
-  "ignorePatterns": [
-    ".*",
-    "*.config.js",
-    "*.config.ts",
-    "!.eslintrc.js",
-    "node_modules",
-    "build"
-  ]
+  "ignorePatterns": [".*", "*.config.ts", "node_modules", "build"]
 }
