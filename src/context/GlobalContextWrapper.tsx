@@ -1,4 +1,5 @@
 import React from 'react';
+import { RecoilRoot } from 'recoil';
 import { ReactQueryProvider } from './react-query-provider';
 
 interface GlobalContextWrapperProps {
@@ -8,5 +9,9 @@ interface GlobalContextWrapperProps {
 export default function GlobalContextWrapper({
   children
 }: GlobalContextWrapperProps) {
-  return <ReactQueryProvider>{children}</ReactQueryProvider>;
+  return (
+    <RecoilRoot>
+      <ReactQueryProvider>{children}</ReactQueryProvider>
+    </RecoilRoot>
+  );
 }
