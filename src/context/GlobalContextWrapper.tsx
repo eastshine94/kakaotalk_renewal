@@ -1,5 +1,6 @@
 import React from 'react';
 import { RecoilRoot } from 'recoil';
+import GlobalErrorBoundary from './GlobalErrorBoundary';
 import { ReactQueryProvider } from './react-query-provider';
 
 interface GlobalContextWrapperProps {
@@ -10,8 +11,10 @@ export default function GlobalContextWrapper({
   children
 }: GlobalContextWrapperProps) {
   return (
-    <RecoilRoot>
-      <ReactQueryProvider>{children}</ReactQueryProvider>
-    </RecoilRoot>
+    <GlobalErrorBoundary>
+      <RecoilRoot>
+        <ReactQueryProvider>{children}</ReactQueryProvider>
+      </RecoilRoot>
+    </GlobalErrorBoundary>
   );
 }
