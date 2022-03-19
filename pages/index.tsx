@@ -1,71 +1,68 @@
 import type { NextPage } from 'next';
-import React, { useState } from 'react';
-import axios from 'axios';
-import { useQuery } from 'react-query';
-import { atom, useRecoilState } from 'recoil';
-
-interface ProductItem {
-  id: number;
-  name: string;
-  price: string;
-}
-
-const productListState = atom<string[]>({
-  key: 'productListState',
-  default: []
-});
+import React from 'react';
+import Image from 'src/components/Image';
 
 const Home: NextPage = () => {
-  const [productList, setProductList] = useRecoilState(productListState);
-  const [text, setText] = useState('');
-
-  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setText(e.target.value);
-  };
-
-  const handleProductSubmit = (e: React.MouseEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setProductList(prev => [...prev, text]);
-    setText('');
-  };
-
-  const fetchData = async () => {
-    const res = await axios.get<ProductItem[]>(
-      'http://makeup-api.herokuapp.com/api/v1/products.json?brand=maybelline'
-    );
-    return res.data;
-  };
-
-  const { data: list } = useQuery(['products'], () => fetchData());
-  if (!list) {
-    return <div>loading...</div>;
-  }
-
   return (
-    <>
-      {!list ? (
-        <div>loading...</div>
-      ) : (
-        <div>
-          <form onSubmit={handleProductSubmit}>
-            <input type="text" value={text} onChange={handleTextChange} />
-            <button type="submit">추가</button>
-          </form>
-
-          {productList.map((val, idx) => (
-            // eslint-disable-next-line react/no-array-index-key
-            <div key={idx}>{val}</div>
-          ))}
-          {list.map(product => (
-            <div key={product.id} className="border-b border-red-600">
-              <div>id: {product.id}</div>
-              <div>name: {product.name}</div>
-              <div>price: {product.price}</div>
-            </div>
-          ))}
+    <div className="w-full ">
+      <div
+        className="m-auto pt-20
+       bg-[#ffeb33] lg:w-[1000px] w-full h-[100vh]
+        border border-gray-200
+       "
+      >
+        <div className="pt-[80px] text-center">
+          <Image
+            src="/asset/kakao_logo.png"
+            width={137}
+            height={105}
+            alt="logo"
+            priority
+          />
         </div>
-      )}
-    </>
+        <div className="w-full h-[300px] pt-[30px]">
+          <form>
+            <label className="block text-center" htmlFor="id">
+              <input
+                className="py-[10px] px-[5px] w-[230px]
+                border border-[#dcdcdc] border-solid"
+                type="text"
+                name="id"
+                placeholder="계정"
+              />
+            </label>
+            <label className="block text-center" htmlFor="pwd">
+              <input
+                className="py-[10px] px-[5px] w-[230px] 
+                border border-[#dcdcdc] border-solid"
+                type="password"
+                name="pwd"
+                placeholder="비밀번호"
+              />
+            </label>
+
+            <button
+              className="block m-auto mt-2 py-[10px] px-[5px] w-[230px] text-white bg-[#423630]
+              hover:bg-[#594941] active:bg-[#423630]"
+              type="submit"
+            >
+              <span className="mr-2">로그인</span>
+              <Image
+                src="/asset/spinner.gif"
+                alt="spinner"
+                width={11}
+                height={11}
+              />
+            </button>
+          </form>
+        </div>
+        <div>
+          <ul className="text-center">
+            <li className="text-[#5a5a5a]">회원 가입</li>
+          </ul>
+        </div>
+      </div>
+    </div>
   );
 };
 
