@@ -1,13 +1,14 @@
 import type { NextPage } from 'next';
 import React from 'react';
 import Image from 'src/components/Image';
+import Link from 'src/components/Link';
 
 const Home: NextPage = () => {
   return (
     <div className="w-full ">
       <div
         className="m-auto pt-20
-       bg-[#ffeb33] lg:w-[1000px] w-full h-[100vh]
+       bg-[#ffeb33] lg:w-[1000px] w-full h-full min-h-screen
         border border-gray-200
        "
       >
@@ -27,7 +28,7 @@ const Home: NextPage = () => {
                 className="py-[10px] px-[5px] w-[230px]
                 border border-[#dcdcdc] border-solid"
                 type="text"
-                name="id"
+                id="id"
                 placeholder="계정"
               />
             </label>
@@ -36,7 +37,7 @@ const Home: NextPage = () => {
                 className="py-[10px] px-[5px] w-[230px] 
                 border border-[#dcdcdc] border-solid"
                 type="password"
-                name="pwd"
+                id="pwd"
                 placeholder="비밀번호"
               />
             </label>
@@ -57,8 +58,10 @@ const Home: NextPage = () => {
           </form>
         </div>
         <div>
-          <ul className="text-center">
-            <li className="text-[#5a5a5a]">회원 가입</li>
+          <ul className="text-center pb-10">
+            <Link href="/signup">
+              <li className="text-[#5a5a5a]">회원 가입</li>
+            </Link>
           </ul>
         </div>
       </div>
