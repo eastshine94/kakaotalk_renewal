@@ -1,72 +1,213 @@
+import React, { useState, useRef, FocusEvent, FormEvent } from 'react';
 import type { NextPage } from 'next';
+import Head from 'next/head';
 import Link from 'src/components/Link';
+import { request, gql } from 'graphql-request';
 
 const Signup: NextPage = () => {
+  const MAX_LEN = 15;
+
+  const idRef = useRef<HTMLInputElement>(null);
+  const pwRef = useRef<HTMLInputElement>(null);
+  const checkPwRef = useRef<HTMLInputElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+
+  const [idWarningMsg, setIdWarningMsg] = useState('');
+  const [pwWarningMsg, setPwWarningMsg] = useState('');
+  const [checkPwWarningMsg, setCheckPwWarningMsg] = useState('');
+  const [nameWarningMsg, setNameWarningMsg] = useState('');
+
+  const isValidId = (userId: string) => {
+    const regExp =
+      /^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,}$/i;
+    const isMatch = userId.match(regExp);
+    if (!isMatch) {
+      setIdWarningMsg('아이디는 이메일 형식이어야 합니다. ex)email@email.com');
+      return;
+    }
+    request<{
+      user: Partial<{ user_id: string; password: string; name: string }>;
+    }>(
+      'http://localhost:3001/graphql',
+      gql`
+        query ($userId: String!) {
+          user(user_id: $userId) {
+            user_id
+            name
+          }
+        }
+      `,
+      { userId }
+    )
+      .then(() => {
+        setIdWarningMsg('이미 사용중이거나 탈퇴한 아이디입니다.');
+      })
+      .catch(() => {
+        setIdWarningMsg('');
+      });
+  };
+  const isValidPw = (pw: string) => {
+    const len = pw.length;
+    if (len < 5) {
+      setPwWarningMsg('5 ~ 15자 입력해주세요.');
+      return;
+    }
+    setPwWarningMsg('');
+  };
+  const isValidCheckPw = (checkPw: string) => {
+    const pw = pwRef.current?.value ?? '';
+    if (checkPw !== pw) {
+      setCheckPwWarningMsg('비밀번호가 일치하지 않습니다.');
+      return;
+    }
+    setCheckPwWarningMsg('');
+  };
+  const isValidName = (name: string) => {
+    const len = name.length;
+    if (len === 0) {
+      setNameWarningMsg('필수 정보입니다.');
+      return;
+    }
+    setNameWarningMsg('');
+  };
+
+  // 입력 창에서 벗어날 때 발생하는 action
+  const handleIdBlur = (event: FocusEvent<HTMLInputElement>) => {
+    event.preventDefault();
+    isValidId(event.target.value);
+  };
+  const handlePwBlur = (event: FocusEvent<HTMLInputElement>): void => {
+    event.preventDefault();
+    isValidPw(event.target.value);
+  };
+  const handleCheckPwBlur = (event: FocusEvent<HTMLInputElement>): void => {
+    event.preventDefault();
+    isValidCheckPw(event.target.value);
+  };
+  const handleNameBlur = (event: FocusEvent<HTMLInputElement>): void => {
+    event.preventDefault();
+    isValidName(event.target.value);
+  };
+
+  const handleSignUpSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const userId = idRef.current?.value ?? '';
+    const pw = pwRef.current?.value ?? '';
+    const checkPw = checkPwRef.current?.value ?? '';
+    const name = nameRef.current?.value ?? '';
+
+    console.log(userId, pw, checkPw, name);
+
+    // if (validId && validPw && validCheckPw && validName) {
+    //   try {
+    //     await signup({ userId, password: pw, name });
+    //     await alert('회원 가입 되었습니다.');
+    //     await history.replace(PAGE_PATHS.LOGIN);
+    //   } catch (err) {
+    //     alert('회원 가입에 실패하였습니다.');
+    //   }
+    // }
+  };
+
   return (
-    <div className="w-full h-full min-h-screen bg-[#f5f6f7]">
-      <div className="lg:w-[1000px] w-full h-full min-h-screen m-auto border border-[#dadada]">
-        <div className="text-center pt-10 pb-10">
-          <Link
-            className="text-5xl text-[#ffeb33] font-bold tracking-[8px]"
-            href="/"
-          >
-            KAKAO
-          </Link>
-        </div>
-        <div>
-          <form className="p-[10px]">
-            <label htmlFor="id">
-              <div className="m-auto mb-[5px] lg:w-[800px] w-full text-[14px] font-bold">
-                아이디
+    <>
+      <Head>
+        <title>회원가입</title>
+      </Head>
+
+      <div className="w-full h-full min-h-screen bg-[#f5f6f7]">
+        <div className="lg:w-[1000px] w-full h-full min-h-screen m-auto border border-[#dadada]">
+          <div className="text-center pt-10 pb-10">
+            <Link
+              className="text-5xl text-[#ffeb33] font-bold tracking-[8px]"
+              href="/"
+            >
+              KAKAO
+            </Link>
+          </div>
+          <div>
+            <form className="p-[10px]" onSubmit={handleSignUpSubmit}>
+              <label htmlFor="id">
+                <div className="m-auto mb-[5px] lg:w-[800px] w-full text-[14px] font-bold">
+                  아이디
+                </div>
+                <input
+                  className="block m-auto px-[5px] py-[15px] lg:w-[800px] w-full"
+                  type="text"
+                  autoComplete="email"
+                  placeholder="email@email.com"
+                  id="id"
+                  ref={idRef}
+                  onBlur={handleIdBlur}
+                />
+                <p className="m-auto text-red-600 lg:w-[800px] w-full text-[14px]">
+                  {idWarningMsg}
+                </p>
+              </label>
+              <label htmlFor="pwd">
+                <div className="m-auto mb-[5px] mt-5 lg:w-[800px] w-full text-[14px] font-bold">
+                  비밀번호
+                </div>
+                <input
+                  className="block m-auto px-[5px] py-[15px] lg:w-[800px] w-full"
+                  type="password"
+                  autoComplete="new-password"
+                  id="pwd"
+                  maxLength={MAX_LEN}
+                  ref={pwRef}
+                  onBlur={handlePwBlur}
+                />
+                <p className="m-auto text-red-600 lg:w-[800px] w-full text-[14px]">
+                  {pwWarningMsg}
+                </p>
+              </label>
+              <label htmlFor="reconfirm-pwd">
+                <div className="m-auto mb-[5px] mt-5 lg:w-[800px] w-full text-[14px] font-bold">
+                  비밀번호 재확인
+                </div>
+                <input
+                  className="block m-auto px-[5px] py-[15px] lg:w-[800px] w-full"
+                  type="password"
+                  autoComplete="new-password"
+                  id="reconfirm-pwd"
+                  maxLength={MAX_LEN}
+                  ref={checkPwRef}
+                  onBlur={handleCheckPwBlur}
+                />
+                <p className="m-auto text-red-600 lg:w-[800px] w-full text-[14px]">
+                  {checkPwWarningMsg}
+                </p>
+              </label>
+              <label htmlFor="name">
+                <div className="m-auto mb-[5px] mt-5 lg:w-[800px] w-full text-[14px] font-bold">
+                  이름
+                </div>
+                <input
+                  className="block m-auto px-[5px] py-[15px] lg:w-[800px] w-full"
+                  id="name"
+                  type="text"
+                  maxLength={MAX_LEN}
+                  ref={nameRef}
+                  onBlur={handleNameBlur}
+                />
+                <p className="m-auto text-red-600 lg:w-[800px] w-full text-[14px]">
+                  {nameWarningMsg}
+                </p>
+              </label>
+              <div className="fixed bottom-0 left-0 w-full">
+                <button
+                  className="block m-auto px-[5px] py-[15px] lg:w-[1000px] w-full bg-[#ffeb33] text-[14px] font-bold"
+                  type="submit"
+                >
+                  가입하기
+                </button>
               </div>
-              <input
-                className="block m-auto mb-5 px-[5px] py-[15px] lg:w-[800px] w-full"
-                type="text"
-                id="id"
-              />
-            </label>
-            <label htmlFor="pwd">
-              <div className="m-auto mb-[5px] lg:w-[800px] w-full text-[14px] font-bold">
-                비밀번호
-              </div>
-              <input
-                className="block m-auto mb-5 px-[5px] py-[15px] lg:w-[800px] w-full"
-                type="password"
-                id="pwd"
-              />
-            </label>
-            <label htmlFor="reconfirm-pwd">
-              <div className="m-auto mb-[5px] lg:w-[800px] w-full text-[14px] font-bold">
-                비밀번호 재확인
-              </div>
-              <input
-                className="block m-auto mb-5 px-[5px] py-[15px] lg:w-[800px] w-full"
-                type="password"
-                id="reconfirm-pwd"
-              />
-            </label>
-            <label htmlFor="name">
-              <div className="m-auto mb-[5px] lg:w-[800px] w-full text-[14px] font-bold">
-                이름
-              </div>
-              <input
-                className="block m-auto mb-5 px-[5px] py-[15px] lg:w-[800px] w-full"
-                id="name"
-                type="text"
-              />
-            </label>
-            <div className="fixed bottom-0 left-0 w-full">
-              <button
-                className="block m-auto px-[5px] py-[15px] lg:w-[1000px] w-full bg-[#ffeb33] text-[14px] font-bold"
-                type="submit"
-              >
-                가입하기
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
