@@ -1,11 +1,15 @@
+/* eslint-disable no-alert */
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import React, { useState, useRef, FocusEvent, FormEvent } from 'react';
 import type { NextPage } from 'next';
+import { useRouter } from 'next/router';
 import Head from 'next/head';
-import Link from 'src/components/Link';
 import { request, gql } from 'graphql-request';
+import Link from 'src/components/Link';
 
-const Signup: NextPage = () => {
+const SignupPage: NextPage = () => {
   const MAX_LEN = 15;
+  const router = useRouter();
 
   const idRef = useRef<HTMLInputElement>(null);
   const pwRef = useRef<HTMLInputElement>(null);
@@ -17,64 +21,92 @@ const Signup: NextPage = () => {
   const [checkPwWarningMsg, setCheckPwWarningMsg] = useState('');
   const [nameWarningMsg, setNameWarningMsg] = useState('');
 
-  const isValidId = (userId: string) => {
+  const signUp = ({
+    userId,
+    password,
+    name
+  }: {
+    userId: string;
+    password: string;
+    name: string;
+  }) =>
+    request(
+      'http://localhost:3001/graphql',
+      gql`
+        mutation ($userId: String!, $password: String!, $name: String!) {
+          signUp(
+            signUpInput: { user_id: $userId, password: $password, name: $name }
+          ) {
+            status
+            user_id
+          }
+        }
+      `,
+      { userId, password, name }
+    );
+
+  const isValidId = async (userId: string): Promise<boolean> => {
     const regExp =
       /^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,}$/i;
     const isMatch = userId.match(regExp);
     if (!isMatch) {
       setIdWarningMsg('아이디는 이메일 형식이어야 합니다. ex)email@email.com');
-      return;
+      return false;
     }
-    request<{
-      user: Partial<{ user_id: string; password: string; name: string }>;
-    }>(
-      'http://localhost:3001/graphql',
-      gql`
-        query ($userId: String!) {
-          user(user_id: $userId) {
-            user_id
-            name
+    try {
+      await request<{
+        user: Partial<{ user_id: string; password: string; name: string }>;
+      }>(
+        'http://localhost:3001/graphql',
+        gql`
+          query ($userId: String!) {
+            user(user_id: $userId) {
+              user_id
+              name
+            }
           }
-        }
-      `,
-      { userId }
-    )
-      .then(() => {
-        setIdWarningMsg('이미 사용중이거나 탈퇴한 아이디입니다.');
-      })
-      .catch(() => {
-        setIdWarningMsg('');
-      });
+        `,
+        { userId }
+      );
+      setIdWarningMsg('이미 사용중이거나 탈퇴한 아이디입니다.');
+      return false;
+    } catch (err) {
+      setIdWarningMsg('');
+      return true;
+    }
   };
-  const isValidPw = (pw: string) => {
+  const isValidPw = (pw: string): boolean => {
     const len = pw.length;
     if (len < 5) {
       setPwWarningMsg('5 ~ 15자 입력해주세요.');
-      return;
+      return false;
     }
     setPwWarningMsg('');
+    return true;
   };
-  const isValidCheckPw = (checkPw: string) => {
+  const isValidCheckPw = (checkPw: string): boolean => {
     const pw = pwRef.current?.value ?? '';
     if (checkPw !== pw) {
       setCheckPwWarningMsg('비밀번호가 일치하지 않습니다.');
-      return;
+      return false;
     }
     setCheckPwWarningMsg('');
+    return true;
   };
-  const isValidName = (name: string) => {
-    const len = name.length;
+  const isValidName = (name: string): boolean => {
+    const len = name.trim().length;
     if (len === 0) {
       setNameWarningMsg('필수 정보입니다.');
-      return;
+      return false;
     }
     setNameWarningMsg('');
+    return true;
   };
 
   // 입력 창에서 벗어날 때 발생하는 action
   const handleIdBlur = (event: FocusEvent<HTMLInputElement>) => {
     event.preventDefault();
-    isValidId(event.target.value);
+    isValidId(event.target.value).catch(() => {});
   };
   const handlePwBlur = (event: FocusEvent<HTMLInputElement>): void => {
     event.preventDefault();
@@ -89,25 +121,37 @@ const Signup: NextPage = () => {
     isValidName(event.target.value);
   };
 
-  const handleSignUpSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
+  const doValidation = async (): Promise<boolean> => {
     const userId = idRef.current?.value ?? '';
     const pw = pwRef.current?.value ?? '';
     const checkPw = checkPwRef.current?.value ?? '';
     const name = nameRef.current?.value ?? '';
 
-    console.log(userId, pw, checkPw, name);
+    return (
+      (await isValidId(userId)) &&
+      isValidPw(pw) &&
+      isValidCheckPw(checkPw) &&
+      isValidName(name)
+    );
+  };
 
-    // if (validId && validPw && validCheckPw && validName) {
-    //   try {
-    //     await signup({ userId, password: pw, name });
-    //     await alert('회원 가입 되었습니다.');
-    //     await history.replace(PAGE_PATHS.LOGIN);
-    //   } catch (err) {
-    //     alert('회원 가입에 실패하였습니다.');
-    //   }
-    // }
+  const handleSignUpSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const userId = idRef.current?.value ?? '';
+    const pw = pwRef.current?.value ?? '';
+    const name = nameRef.current?.value ?? '';
+    if (await doValidation()) {
+      signUp({ userId, password: pw, name })
+        .then(() => {
+          alert('회원가입 완료하였습니다.');
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          router.replace('/');
+        })
+        .catch(() => {
+          alert('회원가입 실패하였습니다.');
+        });
+    }
   };
 
   return (
@@ -211,4 +255,4 @@ const Signup: NextPage = () => {
   );
 };
 
-export default Signup;
+export default SignupPage;

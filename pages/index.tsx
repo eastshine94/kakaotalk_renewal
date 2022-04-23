@@ -30,6 +30,7 @@ const Home: NextPage = () => {
                 type="text"
                 id="id"
                 placeholder="계정"
+                autoComplete="email"
               />
             </label>
             <label className="block text-center" htmlFor="pwd">
@@ -39,6 +40,7 @@ const Home: NextPage = () => {
                 type="password"
                 id="pwd"
                 placeholder="비밀번호"
+                autoComplete="current-password"
               />
             </label>
 
