@@ -4,8 +4,10 @@ import React, { useState, useRef, FocusEvent, FormEvent } from 'react';
 import type { NextPage } from 'next';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import { request, gql } from 'graphql-request';
 import Link from 'src/components/Link';
+import { signUpRequest } from 'src/services/auth-service';
+import { userCheckRequest } from 'src/services/user-service';
+import regexp from 'src/lib/regexp';
 
 const SignupPage: NextPage = () => {
   const MAX_LEN = 15;
@@ -21,53 +23,14 @@ const SignupPage: NextPage = () => {
   const [checkPwWarningMsg, setCheckPwWarningMsg] = useState('');
   const [nameWarningMsg, setNameWarningMsg] = useState('');
 
-  const signUp = ({
-    userId,
-    password,
-    name
-  }: {
-    userId: string;
-    password: string;
-    name: string;
-  }) =>
-    request(
-      'http://localhost:3001/graphql',
-      gql`
-        mutation ($userId: String!, $password: String!, $name: String!) {
-          signUp(
-            signUpInput: { user_id: $userId, password: $password, name: $name }
-          ) {
-            status
-            user_id
-          }
-        }
-      `,
-      { userId, password, name }
-    );
-
   const isValidId = async (userId: string): Promise<boolean> => {
-    const regExp =
-      /^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,}$/i;
-    const isMatch = userId.match(regExp);
+    const isMatch = userId.match(regexp.email);
     if (!isMatch) {
       setIdWarningMsg('아이디는 이메일 형식이어야 합니다. ex)email@email.com');
       return false;
     }
     try {
-      await request<{
-        user: Partial<{ user_id: string; password: string; name: string }>;
-      }>(
-        'http://localhost:3001/graphql',
-        gql`
-          query ($userId: String!) {
-            user(user_id: $userId) {
-              user_id
-              name
-            }
-          }
-        `,
-        { userId }
-      );
+      await userCheckRequest({ userId });
       setIdWarningMsg('이미 사용중이거나 탈퇴한 아이디입니다.');
       return false;
     } catch (err) {
@@ -142,9 +105,9 @@ const SignupPage: NextPage = () => {
     const pw = pwRef.current?.value ?? '';
     const name = nameRef.current?.value ?? '';
     if (await doValidation()) {
-      signUp({ userId, password: pw, name })
-        .then(() => {
-          alert('회원가입 완료하였습니다.');
+      signUpRequest({ userId, password: pw, name })
+        .then(res => {
+          alert(res.signUp.message);
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
           router.replace('/');
         })
